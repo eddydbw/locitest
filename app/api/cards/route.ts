@@ -21,13 +21,13 @@ export async function POST(req: NextRequest) {
   try {
     await initDB()
     const body = await req.json()
-    const { id, deviceId, sessionId, prompt, category, photoData, exchanges, summary } = body
+    const { id, deviceId, sessionId, prompt, category, photoData, audioData, exchanges, summary } = body
 
     if (!id || !deviceId || !prompt || !category) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    await saveCard({ id, deviceId, sessionId, prompt, category, photoData, exchanges, summary })
+    await saveCard({ id, deviceId, sessionId, prompt, category, photoData, audioData, exchanges, summary })
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('POST /api/cards error:', err)

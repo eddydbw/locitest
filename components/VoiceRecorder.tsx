@@ -1,92 +1,118 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 interface Props {
-  onResult: (text: string) => void
+  onResult: (audioData: string | null) => void
   onSkip: () => void
 }
 
 export default function VoiceRecorder({ onResult, onSkip }: Props) {
-  const [state, setState] = useState<'idle' | 'recording' | 'done' | 'text' | 'unsupported'>('idle')
-  const [transcript, setTranscript] = useState('')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recogRef = useRef<any>(null)
+  const [state, setState] = useState<'idle' | 'recording' | 'done' | 'unsupported'>('idle')
+  const [seconds, setSeconds] = useState(0)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [audioData, setAudioData] = useState<string | null>(null)
+  const mediaRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const start = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = window as any
-    const SR = w.SpeechRecognition || w.webkitSpeechRecognition
-    if (!SR) { setState('unsupported'); return }
-    const r = new SR()
-    r.continuous = true
-    r.interimResults = true
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    r.onresult = (e: any) => {
-      let t = ''
-      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript
-      setTranscript(t)
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+      if (audioUrl) URL.revokeObjectURL(audioUrl)
     }
-    r.start()
-    recogRef.current = r
-    setState('recording')
+  }, [audioUrl])
+
+  const start = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) { setState('unsupported'); return }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+      const mr = new MediaRecorder(stream, { mimeType })
+      chunksRef.current = []
+      mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      mr.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(chunksRef.current, { type: mimeType })
+        const url = URL.createObjectURL(blob)
+        setAudioUrl(url)
+        // convert to base64 for storage
+        const reader = new FileReader()
+        reader.onloadend = () => setAudioData(reader.result as string)
+        reader.readAsDataURL(blob)
+        setState('done')
+      }
+      mr.start(100)
+      mediaRef.current = mr
+      setSeconds(0)
+      timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000)
+      setState('recording')
+    } catch { setState('unsupported') }
   }
 
   const stop = () => {
-    recogRef.current?.stop()
-    setState('done')
+    if (timerRef.current) clearInterval(timerRef.current)
+    mediaRef.current?.stop()
   }
+
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
   const btn = {
-    padding: '12px 0', background: 'var(--card-bg)', border: '0.5px solid var(--border)', borderRadius: 10,
-    cursor: 'pointer', fontSize: 15, width: '100%', color: 'var(--text)',
+    padding: '13px 0', background: 'var(--card-bg)', border: '0.5px solid var(--border-strong)',
+    borderRadius: 12, cursor: 'pointer', fontSize: 15, color: 'var(--text)', fontFamily: 'inherit', width: '100%',
   }
-  const ghost = { ...btn, background: 'transparent', border: 'none', color: 'var(--text-muted)', width: 'auto', padding: '12px 16px' }
 
-  if (state === 'unsupported' || state === 'text') return (
-    <div>
-      <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10 }}>
-        {state === 'unsupported' ? "Voice not available — type instead:" : "Type your response:"}
-      </p>
-      <textarea
-        value={transcript}
-        onChange={e => setTranscript(e.target.value)}
-        style={{ width: '100%', minHeight: 80, fontSize: 15, padding: '10px 12px', borderRadius: 10, border: '0.5px solid var(--border)', resize: 'none', boxSizing: 'border-box', background: 'var(--card-bg)', color: 'var(--text)', fontFamily: 'inherit' }}
-        placeholder="type here…"
-      />
-      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-        <button onClick={() => onResult(transcript)} style={{ ...btn, flex: 1 }}>done</button>
-        <button onClick={onSkip} style={ghost}>skip</button>
-      </div>
+  if (state === 'unsupported') return (
+    <div style={{ padding: '16px', background: 'var(--card-bg)', border: '0.5px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
+      <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 12 }}>microphone not available on this device</p>
+      <button onClick={onSkip} style={{ ...btn, width: 'auto', padding: '10px 20px' }}>skip</button>
     </div>
   )
 
   if (state === 'idle') return (
     <div style={{ display: 'flex', gap: 8 }}>
-      <button onClick={start} style={{ ...btn, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        <span style={{ fontSize: 18 }}>🎙</span> talk
+      <button onClick={start} style={{ ...btn, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#e24b4a', display: 'inline-block' }} />
+        record
       </button>
-      <button onClick={() => setState('text')} style={{ ...btn, flex: 1 }}>type</button>
-      <button onClick={onSkip} style={ghost}>skip</button>
+      <button onClick={onSkip} style={{ ...btn, flex: 0, padding: '13px 20px', background: 'transparent', border: '0.5px solid var(--border)', color: 'var(--text-muted)' }}>
+        skip
+      </button>
     </div>
   )
 
   if (state === 'recording') return (
-    <div>
-      <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e24b4a', display: 'inline-block', animation: 'pulse 1s infinite' }} />
-        listening…
+    <div style={{ background: 'var(--card-bg)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#e24b4a', display: 'inline-block', animation: 'pulse 1s infinite' }} />
+          <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>recording</span>
+        </div>
+        <span style={{ fontSize: 14, fontVariantNumeric: 'tabular-nums', color: 'var(--text-muted)' }}>{fmt(seconds)}</span>
       </div>
-      {transcript && <p style={{ fontSize: 15, lineHeight: 1.5, marginBottom: 12 }}>{transcript}</p>}
-      <button onClick={stop} style={btn}>done talking</button>
+      <button onClick={stop} style={btn}>stop</button>
     </div>
   )
 
+  // done state
   return (
-    <div>
-      <p style={{ fontSize: 15, lineHeight: 1.5, marginBottom: 12 }}>{transcript || '(nothing recorded)'}</p>
+    <div style={{ background: 'var(--card-bg)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px' }}>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>listen back</p>
+      {audioUrl && (
+        <audio controls src={audioUrl} style={{ width: '100%', marginBottom: 14, height: 36 }} />
+      )}
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={() => onResult(transcript)} style={{ ...btn, flex: 1 }}>use this</button>
-        <button onClick={() => { setTranscript(''); setState('idle') }} style={{ ...btn, flex: 1, background: 'transparent', color: 'var(--text-muted)' }}>redo</button>
+        <button
+          onClick={() => onResult(audioData)}
+          style={{ ...btn, flex: 2 }}
+        >
+          save this
+        </button>
+        <button
+          onClick={() => { setAudioUrl(null); setAudioData(null); setState('idle') }}
+          style={{ ...btn, flex: 1, background: 'transparent', border: '0.5px solid var(--border)', color: 'var(--text-muted)' }}
+        >
+          redo
+        </button>
       </div>
     </div>
   )

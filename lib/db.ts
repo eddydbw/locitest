@@ -17,6 +17,7 @@ export async function initDB() {
       category TEXT NOT NULL,
       photo_url TEXT,
       photo_data TEXT,
+      audio_data TEXT,
       exchanges JSONB NOT NULL DEFAULT '[]',
       summary TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
@@ -25,6 +26,8 @@ export async function initDB() {
   await sql`
     CREATE INDEX IF NOT EXISTS cards_device_id_idx ON cards(device_id)
   `
+  // add audio_data column if it doesn't exist (safe to run multiple times)
+  await sql`ALTER TABLE cards ADD COLUMN IF NOT EXISTS audio_data TEXT`
 }
 
 export async function getOrCreateSession(deviceId: string) {
@@ -46,11 +49,12 @@ export async function saveCard(card: {
   prompt: string
   category: string
   photoData?: string
+  audioData?: string | null
   exchanges: Exchange[]
   summary?: string
 }) {
   await sql`
-    INSERT INTO cards (id, device_id, session_id, prompt, category, photo_data, exchanges, summary)
+    INSERT INTO cards (id, device_id, session_id, prompt, category, photo_data, audio_data, exchanges, summary)
     VALUES (
       ${card.id},
       ${card.deviceId},
@@ -58,11 +62,13 @@ export async function saveCard(card: {
       ${card.prompt},
       ${card.category},
       ${card.photoData ?? null},
+      ${card.audioData ?? null},
       ${JSON.stringify(card.exchanges)},
       ${card.summary ?? null}
     )
     ON CONFLICT (id) DO UPDATE SET
       exchanges = EXCLUDED.exchanges,
+      audio_data = EXCLUDED.audio_data,
       summary = EXCLUDED.summary
   `
 }
@@ -76,5 +82,5 @@ export async function getCards(deviceId: string) {
 
 export interface Exchange {
   question: string
-  response: string
+  audioData?: string | null
 }
