@@ -27,11 +27,11 @@ function getDeviceId(): string {
 }
 
 const s = {
-  label: { fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6 },
-  btn: { width: '100%', padding: '13px 0', background: 'var(--card-bg)', border: '0.5px solid var(--border-strong)', borderRadius: 12, cursor: 'pointer', fontSize: 15, color: 'var(--text)', fontFamily: 'inherit' },
-  ghost: { background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', fontFamily: 'inherit', padding: '4px 0' },
-  back: { display: 'flex' as const, alignItems: 'center' as const, gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', fontFamily: 'inherit', padding: 0, marginBottom: 24 },
-  card: { background: 'var(--card-bg)', border: '0.5px solid var(--border)', borderRadius: 12, overflow: 'hidden' as const },
+  label: { fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 6 },
+  btn: { width: '100%', padding: '13px 0', background: 'var(--card-bg)', border: '2px solid var(--border-strong)', borderRadius: 16, cursor: 'pointer', fontSize: 15, color: 'var(--text)' },
+  ghost: { background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', padding: '4px 0' },
+  back: { display: 'flex' as const, alignItems: 'center' as const, gap: 6, background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', padding: 0, marginBottom: 24 },
+  card: { background: 'var(--card-bg)', border: '2px solid var(--border)', borderRadius: 16, overflow: 'hidden' as const },
 }
 
 function BackButton({ onClick }: { onClick: () => void }) {
@@ -55,9 +55,9 @@ function AudioPlayer({ src }: { src: string }) {
   }
 
   return (
-    <button onClick={toggle} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: 'var(--text)', fontFamily: 'inherit' }}>
+    <button onClick={toggle} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg)', border: '2px solid var(--border)', borderRadius: 12, padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: 'var(--text)' }}>
       {playing
-        ? <><span style={{ width: 10, height: 10, borderRadius: '50%', background: '#e24b4a', display: 'inline-block', animation: 'pulse 1s infinite' }} /> stop</>
+        ? <><span style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF2D78', display: 'inline-block', animation: 'pulse 1s infinite' }} /> stop</>
         : <><span style={{ fontSize: 16 }}>▶</span> play response</>
       }
     </button>
@@ -130,7 +130,6 @@ export default function LociApp() {
     setConversation(history)
     try {
       const q = await askClaude(history)
-      // strip DONE: prefix if Claude wraps up early
       setCurrentQ(q.startsWith('DONE:') ? q.replace('DONE:', '').trim() : q)
     } catch { setCurrentQ('What made you choose that?') }
     setScreen('question')
@@ -138,7 +137,6 @@ export default function LociApp() {
   }
 
   const handleAudio = async (audioData: string | null) => {
-    // save card with photo + question + audio, no further branching
     await persistCard({
       id: crypto.randomUUID(),
       prompt: prompt!.text,
@@ -156,179 +154,243 @@ export default function LociApp() {
   const randomPrompt = () => startSession(PROMPTS[Math.floor(Math.random() * PROMPTS.length)])
 
   return (
-    <main style={{ maxWidth: 440, margin: '0 auto', padding: '24px 18px 56px' }}>
+    <main>
 
-      {/* HOME */}
+      {/* HOME — full-page centred */}
       {screen === 'home' && (
-        <div className="animate-slide">
-          <div style={{ marginBottom: 36 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.03em', marginBottom: 4 }}>loci</h1>
-            <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>photo prompts · voice responses</p>
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
-            <button onClick={randomPrompt} style={{ ...s.btn, flex: 2 }}>random prompt</button>
-            <button onClick={() => setScreen('choose')} style={{ ...s.btn, flex: 1, background: 'transparent', color: 'var(--text-muted)' }}>choose</button>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
-            <p style={{ ...s.label, marginBottom: 0 }}>your cards</p>
-            <button onClick={goToCards} style={{ ...s.ghost, fontSize: 13 }}>see all →</button>
-          </div>
-          <div onClick={goToCards} style={{ ...s.card, padding: '18px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 15, color: 'var(--text-muted)' }}>view saved cards</p>
-            <span style={{ color: 'var(--text-muted)' }}>→</span>
+        <div className="animate-slide" style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          padding: 24,
+          textAlign: 'center',
+        }}>
+
+          {/* Saved cards icon — top right */}
+          <button
+            onClick={goToCards}
+            className="circle-btn"
+            title="Saved cards"
+            style={{
+              position: 'absolute', top: 20, right: 20,
+              width: 48, height: 48,
+              background: '#7C3AED',
+              boxShadow: '0 4px 14px rgba(124,58,237,0.4)',
+              color: 'white',
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="16" height="13" rx="2"/>
+              <path d="M6 7V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/>
+            </svg>
+          </button>
+
+          {/* Title */}
+          <h1 style={{
+            fontFamily: 'Mansalva, cursive',
+            fontSize: 80,
+            color: '#FF2D78',
+            lineHeight: 1,
+            marginBottom: 56,
+            letterSpacing: '0.02em',
+          }}>
+            Loci
+          </h1>
+
+          {/* Button cluster */}
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            {/* Big random prompt circle */}
+            <button
+              onClick={randomPrompt}
+              className="circle-btn"
+              style={{
+                width: 200, height: 200,
+                background: '#FFD700',
+                boxShadow: '0 8px 28px rgba(255,215,0,0.55)',
+                fontSize: 22,
+                color: '#2D1B69',
+                flexDirection: 'column',
+                lineHeight: 1.25,
+                textAlign: 'center',
+              }}
+            >
+              random<br />prompt
+            </button>
+
+            {/* Small choose circle — bottom right of big button */}
+            <button
+              onClick={() => setScreen('choose')}
+              className="circle-btn"
+              style={{
+                position: 'absolute', bottom: -16, right: -16,
+                width: 82, height: 82,
+                background: '#FF6B35',
+                boxShadow: '0 4px 16px rgba(255,107,53,0.5)',
+                fontSize: 18,
+                color: 'white',
+              }}
+            >
+              choose
+            </button>
           </div>
         </div>
       )}
 
-      {/* CHOOSE */}
-      {screen === 'choose' && (
-        <div className="animate-slide">
-          <BackButton onClick={() => setScreen('home')} />
-          <p style={{ ...s.label, marginBottom: 16 }}>choose a prompt</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {PROMPTS.map(p => (
-              <button key={p.id} onClick={() => startSession(p)} style={{ ...s.card, textAlign: 'left', padding: '14px 16px', cursor: 'pointer', background: 'var(--card-bg)', border: '0.5px solid var(--border)', width: '100%', fontFamily: 'inherit' }}>
-                <p style={{ ...s.label }}>{p.category}</p>
-                <p style={{ fontSize: 15, lineHeight: 1.4, color: 'var(--text)' }}>{p.text}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* All other screens — constrained container */}
+      {screen !== 'home' && (
+        <div style={{ maxWidth: 440, margin: '0 auto', padding: '24px 18px 56px' }}>
 
-      {/* PROMPT + PHOTO */}
-      {screen === 'prompt' && prompt && (
-        <div className="animate-slide">
-          <BackButton onClick={() => setScreen('home')} />
-          <p style={{ ...s.label }}>{prompt.category}</p>
-          <p style={{ fontSize: 22, fontWeight: 500, lineHeight: 1.3, marginBottom: 28, letterSpacing: '-0.01em' }}>{prompt.text}</p>
-          {showCamera ? (
-            <CameraCapture onCapture={d => { setPhoto(d); setShowCamera(false) }} onCancel={() => setShowCamera(false)} />
-          ) : photo ? (
-            <div>
-              <img src={photo} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: 12, maxHeight: 280, objectFit: 'cover' }} />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setShowCamera(true)} style={{ ...s.btn, flex: 1, color: 'var(--text-muted)', background: 'transparent' }}>retake</button>
-                <button onClick={() => handlePhoto(photo)} disabled={loading} style={{ ...s.btn, flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                  {loading ? <span className="spinner" /> : 'use this →'}
-                </button>
+          {/* CHOOSE */}
+          {screen === 'choose' && (
+            <div className="animate-slide">
+              <BackButton onClick={() => setScreen('home')} />
+              <p style={{ ...s.label, marginBottom: 16 }}>choose a prompt</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {PROMPTS.map(p => (
+                  <button key={p.id} onClick={() => startSession(p)} style={{ ...s.card, textAlign: 'left', padding: '14px 16px', cursor: 'pointer', background: 'var(--card-bg)', border: '2px solid var(--border)', width: '100%' }}>
+                    <p style={{ ...s.label }}>{p.category}</p>
+                    <p style={{ fontSize: 15, lineHeight: 1.4, color: 'var(--text)' }}>{p.text}</p>
+                  </button>
+                ))}
               </div>
             </div>
-          ) : (
-            <div>
-              <button onClick={() => setShowCamera(true)} style={{ ...s.btn, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '20px 0' }}>
-                <span style={{ fontSize: 20 }}>📷</span> take a photo
-              </button>
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)', marginBottom: 10 }}>or upload from your files</p>
-              <label style={{ display: 'block', textAlign: 'center', cursor: 'pointer' }}>
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
-                  const f = e.target.files?.[0]; if (!f) return
-                  const r = new FileReader(); r.onload = ev => setPhoto(ev.target!.result as string); r.readAsDataURL(f)
-                }} />
-                <span style={{ fontSize: 14, color: 'var(--text-muted)', textDecoration: 'underline' }}>choose file</span>
-              </label>
-            </div>
           )}
-        </div>
-      )}
 
-      {/* QUESTION + VOICE */}
-      {screen === 'question' && (
-        <div className="animate-slide">
-          {photo && <img src={photo} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: 24, maxHeight: 220, objectFit: 'cover' }} />}
-          {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0' }}>
-              <span className="spinner" /><span style={{ fontSize: 14, color: 'var(--text-muted)' }}>thinking…</span>
-            </div>
-          ) : (
-            <>
-              <p style={{ ...s.label, marginBottom: 10 }}>respond out loud</p>
-              <p style={{ fontSize: 22, fontWeight: 500, lineHeight: 1.35, marginBottom: 28, letterSpacing: '-0.01em' }}>{currentQ}</p>
-              <VoiceRecorder onResult={handleAudio} onSkip={handleSkip} />
-            </>
-          )}
-        </div>
-      )}
-
-      {/* DONE */}
-      {screen === 'done' && (
-        <div className="animate-slide" style={{ paddingTop: 20, textAlign: 'center' }}>
-          <p style={{ fontSize: 48, marginBottom: 20 }}>✓</p>
-          <p style={{ fontSize: 20, fontWeight: 500, marginBottom: 8 }}>card saved</p>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 36 }}>prompt · photo · response</p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={goToCards} style={{ ...s.btn, flex: 1 }}>my cards</button>
-            <button onClick={randomPrompt} style={{ ...s.btn, flex: 1, background: 'transparent', color: 'var(--text-muted)' }}>new prompt</button>
-          </div>
-        </div>
-      )}
-
-      {/* CARDS LIST */}
-      {screen === 'cards' && !expandedCard && (
-        <div className="animate-slide">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-            <BackButton onClick={() => setScreen('home')} />
-            <p style={{ fontSize: 14, fontWeight: 500 }}>cards</p>
-            <div style={{ width: 60 }} />
-          </div>
-          {cardsLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><span className="spinner" /></div>
-          ) : cards.length === 0 ? (
-            <div style={{ ...s.card, padding: '40px 20px', textAlign: 'center' }}>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>no cards yet — take a prompt to start</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {cards.map(c => (
-                <div key={c.id} onClick={() => setExpandedCard(c)} style={{ ...s.card, cursor: 'pointer' }}>
-                  <div style={{ display: 'flex' }}>
-                    {c.photo_data && <img src={c.photo_data} alt="" style={{ width: 72, height: 72, objectFit: 'cover', flexShrink: 0 }} />}
-                    <div style={{ padding: '10px 12px', flex: 1, minWidth: 0 }}>
-                      <p style={{ ...s.label }}>{c.category}</p>
-                      <p style={{ fontSize: 13, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{c.prompt}</p>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '0.5px solid var(--border)', padding: '6px 12px', display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      {new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                    </span>
-                    {c.audio_data && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>🎙 has audio</span>}
+          {/* PROMPT + PHOTO */}
+          {screen === 'prompt' && prompt && (
+            <div className="animate-slide">
+              <BackButton onClick={() => setScreen('home')} />
+              <p style={{ ...s.label }}>{prompt.category}</p>
+              <p style={{ fontSize: 22, fontWeight: 500, lineHeight: 1.3, marginBottom: 28 }}>{prompt.text}</p>
+              {showCamera ? (
+                <CameraCapture onCapture={d => { setPhoto(d); setShowCamera(false) }} onCancel={() => setShowCamera(false)} />
+              ) : photo ? (
+                <div>
+                  <img src={photo} alt="" style={{ width: '100%', borderRadius: 16, marginBottom: 12, maxHeight: 280, objectFit: 'cover' }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => setShowCamera(true)} style={{ ...s.btn, flex: 1, color: 'var(--text-muted)', background: 'transparent' }}>retake</button>
+                    <button onClick={() => handlePhoto(photo)} disabled={loading} style={{ ...s.btn, flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#FFD700', border: 'none', color: '#2D1B69' }}>
+                      {loading ? <span className="spinner" /> : 'use this →'}
+                    </button>
                   </div>
                 </div>
+              ) : (
+                <div>
+                  <button onClick={() => setShowCamera(true)} style={{ ...s.btn, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '20px 0', background: '#FFD700', border: 'none', color: '#2D1B69' }}>
+                    <span style={{ fontSize: 20 }}>📷</span> take a photo
+                  </button>
+                  <label style={{ display: 'block', textAlign: 'center', cursor: 'pointer' }}>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                      const f = e.target.files?.[0]; if (!f) return
+                      const r = new FileReader(); r.onload = ev => setPhoto(ev.target!.result as string); r.readAsDataURL(f)
+                    }} />
+                    <span style={{ fontSize: 14, color: 'var(--text-muted)', textDecoration: 'underline', cursor: 'pointer' }}>or choose from files</span>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* QUESTION + VOICE */}
+          {screen === 'question' && (
+            <div className="animate-slide">
+              {photo && <img src={photo} alt="" style={{ width: '100%', borderRadius: 16, marginBottom: 24, maxHeight: 220, objectFit: 'cover' }} />}
+              {loading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0' }}>
+                  <span className="spinner" /><span style={{ fontSize: 14, color: 'var(--text-muted)' }}>thinking…</span>
+                </div>
+              ) : (
+                <>
+                  <p style={{ fontSize: 22, fontWeight: 500, lineHeight: 1.35, marginBottom: 28 }}>{currentQ}</p>
+                  <VoiceRecorder onResult={handleAudio} onSkip={handleSkip} />
+                </>
+              )}
+            </div>
+          )}
+
+          {/* DONE */}
+          {screen === 'done' && (
+            <div className="animate-slide animate-pop" style={{ paddingTop: 60, textAlign: 'center' }}>
+              <p style={{ fontSize: 64, marginBottom: 16 }}>✓</p>
+              <p style={{ fontSize: 22, fontWeight: 600, marginBottom: 48, color: '#7C3AED' }}>card saved</p>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <button onClick={goToCards} style={{ ...s.btn, width: 'auto', padding: '13px 28px', background: '#7C3AED', border: 'none', color: 'white', borderRadius: 40 }}>my cards</button>
+                <button onClick={randomPrompt} style={{ ...s.btn, width: 'auto', padding: '13px 28px', background: '#FFD700', border: 'none', color: '#2D1B69', borderRadius: 40 }}>new prompt</button>
+              </div>
+            </div>
+          )}
+
+          {/* CARDS LIST */}
+          {screen === 'cards' && !expandedCard && (
+            <div className="animate-slide">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <BackButton onClick={() => setScreen('home')} />
+                <p style={{ fontSize: 16, fontWeight: 600, color: '#7C3AED' }}>cards</p>
+                <div style={{ width: 60 }} />
+              </div>
+              {cardsLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><span className="spinner" /></div>
+              ) : cards.length === 0 ? (
+                <div style={{ ...s.card, padding: '40px 20px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>no cards yet — take a prompt to start</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {cards.map(c => (
+                    <div key={c.id} onClick={() => setExpandedCard(c)} style={{ ...s.card, cursor: 'pointer' }}>
+                      <div style={{ display: 'flex' }}>
+                        {c.photo_data && <img src={c.photo_data} alt="" style={{ width: 72, height: 72, objectFit: 'cover', flexShrink: 0 }} />}
+                        <div style={{ padding: '10px 12px', flex: 1, minWidth: 0 }}>
+                          <p style={{ ...s.label }}>{c.category}</p>
+                          <p style={{ fontSize: 13, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{c.prompt}</p>
+                        </div>
+                      </div>
+                      <div style={{ borderTop: '1px solid var(--border)', padding: '6px 12px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                          {new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        </span>
+                        {c.audio_data && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>🎙 has audio</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CARD DETAIL */}
+          {screen === 'cards' && expandedCard && (
+            <div className="animate-slide">
+              <BackButton onClick={() => setExpandedCard(null)} />
+              {expandedCard.photo_data && (
+                <img src={expandedCard.photo_data} alt="" style={{ width: '100%', borderRadius: 16, marginBottom: 20, maxHeight: 320, objectFit: 'cover' }} />
+              )}
+              <p style={{ ...s.label }}>{expandedCard.category}</p>
+              <p style={{ fontSize: 19, fontWeight: 500, lineHeight: 1.4, marginBottom: 28 }}>{expandedCard.prompt}</p>
+
+              {(expandedCard.exchanges as Exchange[]).map((ex, i) => (
+                <div key={i} style={{ marginBottom: 20 }}>
+                  <p style={{ ...s.label, marginBottom: 8 }}>question asked</p>
+                  <p style={{ fontSize: 16, lineHeight: 1.5, marginBottom: 12, fontWeight: 500 }}>{ex.question}</p>
+                  {ex.audioData
+                    ? <AudioPlayer src={ex.audioData} />
+                    : <p style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>no audio recorded</p>
+                  }
+                </div>
               ))}
+
+              {!expandedCard.exchanges?.length && expandedCard.audio_data && (
+                <div>
+                  <p style={{ ...s.label, marginBottom: 8 }}>voice response</p>
+                  <AudioPlayer src={expandedCard.audio_data} />
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* CARD DETAIL */}
-      {screen === 'cards' && expandedCard && (
-        <div className="animate-slide">
-          <BackButton onClick={() => setExpandedCard(null)} />
-          {expandedCard.photo_data && (
-            <img src={expandedCard.photo_data} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: 20, maxHeight: 320, objectFit: 'cover' }} />
-          )}
-          <p style={{ ...s.label }}>{expandedCard.category}</p>
-          <p style={{ fontSize: 19, fontWeight: 500, lineHeight: 1.4, marginBottom: 28, letterSpacing: '-0.01em' }}>{expandedCard.prompt}</p>
-
-          {(expandedCard.exchanges as Exchange[]).map((ex, i) => (
-            <div key={i} style={{ marginBottom: 20 }}>
-              <p style={{ ...s.label, marginBottom: 8 }}>question asked</p>
-              <p style={{ fontSize: 16, lineHeight: 1.5, marginBottom: 12, fontWeight: 500 }}>{ex.question}</p>
-              {ex.audioData
-                ? <AudioPlayer src={ex.audioData} />
-                : <p style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>no audio recorded</p>
-              }
-            </div>
-          ))}
-
-          {/* top-level audio_data fallback for older cards */}
-          {!expandedCard.exchanges?.length && expandedCard.audio_data && (
-            <div>
-              <p style={{ ...s.label, marginBottom: 8 }}>voice response</p>
-              <AudioPlayer src={expandedCard.audio_data} />
-            </div>
-          )}
         </div>
       )}
     </main>
