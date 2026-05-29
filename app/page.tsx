@@ -282,6 +282,10 @@ export default function LociApp() {
           {screen === 'prompt' && prompt && (
             <div className="animate-slide">
               <BackButton onClick={() => setScreen('home')} />
+              <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                <p style={{ ...s.label, textAlign: 'center', marginBottom: 10 }}>{prompt.category}</p>
+                <p style={{ fontSize: 22, fontWeight: 500, lineHeight: 1.3 }}>{prompt.text}</p>
+              </div>
               {showCamera ? (
                 <CameraCapture onCapture={d => { setPhoto(d); setShowCamera(false) }} onCancel={() => setShowCamera(false)} />
               ) : photo ? (
@@ -295,27 +299,23 @@ export default function LociApp() {
                   </div>
                 </div>
               ) : (
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ ...s.label, textAlign: 'center', marginBottom: 10 }}>{prompt.category}</p>
-                  <p style={{ fontSize: 22, fontWeight: 500, lineHeight: 1.3, marginBottom: 40 }}>{prompt.text}</p>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => setShowCamera(true)}
-                      className="circle-btn"
-                      aria-label="take a photo"
-                      style={{
-                        width: 120, height: 120,
-                        background: '#FFD700',
-                        boxShadow: '0 6px 22px rgba(255,215,0,0.5)',
-                        color: '#2D1B69',
-                      }}
-                    >
-                      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
-                      </svg>
-                    </button>
-                  </div>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => setShowCamera(true)}
+                    className="circle-btn"
+                    aria-label="take a photo"
+                    style={{
+                      width: 120, height: 120,
+                      background: '#FFD700',
+                      boxShadow: '0 6px 22px rgba(255,215,0,0.5)',
+                      color: '#2D1B69',
+                    }}
+                  >
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  </button>
                 </div>
               )}
             </div>
