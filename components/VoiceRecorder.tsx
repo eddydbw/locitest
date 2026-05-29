@@ -9,16 +9,19 @@ interface Props {
 export default function VoiceRecorder({ onResult, onSkip }: Props) {
   const [state, setState] = useState<'idle' | 'recording' | 'done' | 'text' | 'unsupported'>('idle')
   const [transcript, setTranscript] = useState('')
-  const recogRef = useRef<SpeechRecognition | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recogRef = useRef<any>(null)
 
   const start = () => {
-    const SR = (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition
-      || (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition
     if (!SR) { setState('unsupported'); return }
     const r = new SR()
     r.continuous = true
     r.interimResults = true
-    r.onresult = (e: SpeechRecognitionEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    r.onresult = (e: any) => {
       let t = ''
       for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript
       setTranscript(t)
